@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2021-2023 Lin Song <linsongui@gmail.com>
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 # Unported License: http://creativecommons.org/licenses/by-sa/3.0/
@@ -7,9 +7,9 @@
 # Attribution required: please include my name in any derivative and let me
 # know how you have improved it!
 
-FROM alpine:3.15
+FROM alpine:3.17
 
-ENV SWAN_VER 4.7
+ENV SWAN_VER 4.11
 WORKDIR /opt/src
 
 RUN set -x \
@@ -23,9 +23,7 @@ RUN set -x \
     && tar xzf libreswan.tar.gz \
     && rm -f libreswan.tar.gz \
     && cd "libreswan-${SWAN_VER}" \
-    && sed -i '28s/stdlib\.h/sys\/types.h/' include/fd.h \
-    && printf 'WERROR_CFLAGS=-w -s\nUSE_DNSSEC=false\nUSE_DH2=true\n' > Makefile.inc.local \
-    && printf 'FINALNSSDIR=/etc/ipsec.d\nUSE_GLIBC_KERN_FLIP_HEADERS=true\n' >> Makefile.inc.local \
+    && printf 'WERROR_CFLAGS=-w -s\nUSE_DNSSEC=false\nUSE_DH2=true\nFINALNSSDIR=/etc/ipsec.d\n' > Makefile.inc.local \
     && make -s base \
     && make -s install-base \
     && cd /opt/src \
@@ -36,7 +34,7 @@ RUN set -x \
          bison flex gcc make libc-dev bsd-compat-headers linux-pam-dev \
          nss-dev libcap-ng-dev libevent-dev curl-dev nspr-dev
 
-RUN wget -t 3 -T 30 -nv -O /opt/src/ikev2.sh https://github.com/hwdsl2/setup-ipsec-vpn/raw/7b9813d562fe1346f6aed47ee6ecb82f7dd9b175/extras/ikev2setup.sh \
+RUN wget -t 3 -T 30 -nv -O /opt/src/ikev2.sh https://github.com/hwdsl2/setup-ipsec-vpn/raw/2039f91151c4a339c57fff221d6b540d523dd262/extras/ikev2setup.sh \
     && chmod +x /opt/src/ikev2.sh \
     && ln -s /opt/src/ikev2.sh /usr/bin
 

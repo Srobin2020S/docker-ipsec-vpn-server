@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2020-2023 Lin Song <linsongui@gmail.com>
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 # Unported License: http://creativecommons.org/licenses/by-sa/3.0/
@@ -28,7 +28,7 @@ jobs:
       OS_TYPE: ${{ inputs.os_type }}
       TEST_ID: ${{ matrix.test_id }}
     steps:
-      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # 2.4.0
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Test

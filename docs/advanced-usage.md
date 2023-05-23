@@ -1,6 +1,6 @@
-# Advanced Usage
+[English](advanced-usage.md) | [中文](advanced-usage-zh.md)
 
-*Read this in other languages: [English](advanced-usage.md), [中文](advanced-usage-zh.md).*
+# Advanced Usage
 
 - [Use alternative DNS servers](#use-alternative-dns-servers)
 - [Run without privileged mode](#run-without-privileged-mode)
@@ -15,6 +15,7 @@
 - [Build from source code](#build-from-source-code)
 - [Bash shell inside container](#bash-shell-inside-container)
 - [Bind mount the env file](#bind-mount-the-env-file)
+- [Deploy Google BBR congestion control](#deploy-google-bbr-congestion-control)
 
 ## Use alternative DNS servers
 
@@ -31,7 +32,7 @@ Note that if IKEv2 is already set up in the Docker container, you will also need
 
 Advanced users can create a Docker container from this image without using [privileged mode](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities) (replace `./vpn.env` in the command below with your own `env` file).
 
-**Note:** If your Docker host runs CentOS 8, Oracle Linux 8, Rocky Linux or AlmaLinux, it is recommended to use [privileged mode](../README.md#start-the-ipsec-vpn-server). If you want to run without privileged mode, you **must** run `modprobe ip_tables` before creating the Docker container and also on boot.
+**Note:** If your Docker host runs CentOS Stream, Oracle Linux 8+, Rocky Linux or AlmaLinux, it is recommended to use [privileged mode](../README.md#start-the-ipsec-vpn-server). If you want to run without privileged mode, you **must** run `modprobe ip_tables` before creating the Docker container and also on boot.
 
 ```
 docker run \
@@ -295,11 +296,23 @@ docker run \
     hwdsl2/ipsec-vpn-server
 ```
 
+## Deploy Google BBR congestion control
+
+After the VPN server is set up, the performance can be improved by deploying the Google BBR congestion control algorithm on your Docker host.
+
+This is usually done by modifying the configuration file `/etc/sysctl.conf`. However, some Linux distributions may additionally require updates to the Linux kernel.
+
+For detailed deployment methods, please refer to [this document](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/bbr.md). When finished, restart the Docker container:
+
+```
+docker restart ipsec-vpn-server
+```
+
 ## License
 
 **Note:** The software components inside the pre-built image (such as Libreswan and xl2tpd) are under the respective licenses chosen by their respective copyright holders. As for any pre-built image usage, it is the image user's responsibility to ensure that any use of this image complies with any relevant licenses for all software contained within.
 
-Copyright (C) 2016-2022 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)
+Copyright (C) 2016-2023 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)
 
 [![Creative Commons License](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)](http://creativecommons.org/licenses/by-sa/3.0/)   
 This work is licensed under the [Creative Commons Attribution-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-sa/3.0/)   

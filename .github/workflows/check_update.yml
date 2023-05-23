@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2020-2023 Lin Song <linsongui@gmail.com>
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 # Unported License: http://creativecommons.org/licenses/by-sa/3.0/
@@ -36,7 +36,7 @@ jobs:
       should_update: ${{ steps.check.outputs.should_update }}
     steps:
       - name: Cache
-        uses: actions/cache@136d96b4aee02b1f0de3ba493b1d47135042d9c0 # 3.0.1
+        uses: actions/cache@v3
         with:
           path: |
             ${{ runner.temp }}/.buildx-bin
@@ -48,7 +48,7 @@ jobs:
       - name: Prepare
         run: |
           if [ "$OS_TYPE" = "alpine" ]; then
-            docker pull alpine:3.15
+            docker pull alpine:3.17
             docker pull "$DOCKER_USER/ipsec-vpn-server"
           elif [ "$OS_TYPE" = "debian" ]; then
             docker pull debian:bullseye-slim
@@ -62,7 +62,7 @@ jobs:
           BASE_UPDATED=false
 
           if [ "$OS_TYPE" = "alpine" ]; then
-            base_ts=$(docker inspect --format='{{.Created}}' alpine:3.15)
+            base_ts=$(docker inspect --format='{{.Created}}' alpine:3.17)
             image_ts=$(docker inspect --format='{{.Created}}' "$DOCKER_USER/ipsec-vpn-server")
           elif [ "$OS_TYPE" = "debian" ]; then
             base_ts=$(docker inspect --format='{{.Created}}' debian:bullseye-slim)
@@ -93,5 +93,5 @@ jobs:
               echo "Not starting build."
             fi
           fi
-          echo ::set-output name=should_test::${BASE_UPDATED}
-          echo ::set-output name=should_update::${BASE_UPDATED}
+          echo "should_test=${BASE_UPDATED}" >> "$GITHUB_OUTPUT"
+          echo "should_update=${BASE_UPDATED}" >> "$GITHUB_OUTPUT"

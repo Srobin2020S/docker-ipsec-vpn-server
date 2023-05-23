@@ -6,7 +6,7 @@
 
 使用这个 Docker 镜像快速搭建 IPsec VPN 服务器。支持 IPsec/L2TP，Cisco IPsec 和 IKEv2 协议。
 
-本镜像以 Alpine 3.15 或 Debian 11 为基础，并使用 [Libreswan](https://libreswan.org) (IPsec VPN 软件) 和 [xl2tpd](https://github.com/xelerance/xl2tpd) (L2TP 服务进程)。
+本镜像以 Alpine 3.17 或 Debian 11 为基础，并使用 [Libreswan](https://libreswan.org) (IPsec VPN 软件) 和 [xl2tpd](https://github.com/xelerance/xl2tpd) (L2TP 服务进程)。
 
 IPsec VPN 可以加密你的网络流量，以防止在通过因特网传送时，你和 VPN 服务器之间的任何人对你的数据的未经授权的访问。在使用不安全的网络时，这是特别有用的，例如在咖啡厅，机场或旅馆房间。
 
@@ -36,7 +36,7 @@ docker run \
 
 - 支持具有强大和快速加密算法（例如 AES-GCM）的 IKEv2 模式
 - 生成 VPN 配置文件以自动配置 iOS, macOS 和 Android 设备
-- 支持 Windows, macOS, iOS, Android 和 Linux 作为 VPN 客户端
+- 支持 Windows, macOS, iOS, Android, Chrome OS 和 Linux 客户端
 - 包括辅助脚本以管理 IKEv2 用户和证书
 
 ## 安装 Docker
@@ -66,20 +66,20 @@ docker image tag quay.io/hwdsl2/ipsec-vpn-server hwdsl2/ipsec-vpn-server
 
 ### 镜像对照表
 
-有两个预构建的镜像可用。默认的基于 Alpine 的镜像大小仅 ~18MB。
+有两个预构建的镜像可用。默认的基于 Alpine 的镜像大小仅 ~17MB。
 
 |                 | 基于 Alpine               | 基于 Debian                     |
 | --------------- | ------------------------ | ------------------------------ |
 | 镜像名称          | hwdsl2/ipsec-vpn-server  | hwdsl2/ipsec-vpn-server:debian |
-| 压缩后大小        | ~ 18 MB                  | ~ 62 MB                        |
-| 基础镜像          | Alpine Linux 3.15        | Debian Linux 11                |
+| 压缩后大小        | ~ 17 MB                  | ~ 62 MB                        |
+| 基础镜像          | Alpine Linux 3.17        | Debian Linux 11                |
 | 系统架构          | amd64, arm64, arm/v7     | amd64, arm64, arm/v7           |
-| Libreswan 版本   | 4.7                      | 4.7                            |
+| Libreswan 版本   | 4.11                     | 4.11                           |
 | IPsec/L2TP      | ✅                       | ✅                              |
 | Cisco IPsec     | ✅                       | ✅                              |
 | IKEv2           | ✅                       | ✅                              |
 
-**注：** 要使用基于 Debian 的镜像，请将本自述文件中所有的 `hwdsl2/ipsec-vpn-server` 替换为 `hwdsl2/ipsec-vpn-server:debian`。
+**注：** 要使用基于 Debian 的镜像，请将本自述文件中所有的 `hwdsl2/ipsec-vpn-server` 替换为 `hwdsl2/ipsec-vpn-server:debian`。这些镜像当前与 Synology NAS 系统不兼容。
 
 ## 如何使用本镜像
 
@@ -105,6 +105,8 @@ VPN_ADDL_PASSWORDS=additional_password_1 additional_password_2
 ```
 
 **注：** 在你的 `env` 文件中，**不要**为变量值添加 `""` 或者 `''`，或在 `=` 两边添加空格。**不要**在值中使用这些字符： `\ " '`。一个安全的 IPsec PSK 应该至少包含 20 个随机字符。
+
+**注：** 如果在创建 Docker 容器后修改 `env` 文件，则必须删除并重新创建容器才能使更改生效。参见[更新 Docker 镜像](#更新-docker-镜像)。
 
 <details>
 <summary>
@@ -181,7 +183,7 @@ Username: 你的VPN用户名
 Password: 你的VPN密码
 ```
 
-在命令输出中也会包含 IKEv2 配置信息（如果启用）。要开始使用 IKEv2，请参见 [配置并使用 IKEv2 VPN](#配置并使用-ikev2-vpn)。
+在命令输出中也会包含 IKEv2 配置信息（如果已启用）。
 
 （可选步骤）备份自动生成的 VPN 登录信息（如果有）到当前目录：
 
@@ -191,21 +193,23 @@ docker cp ipsec-vpn-server:/etc/ipsec.d/vpn-gen.env ./
 
 ## 下一步
 
+*其他语言版本: [English](README.md#next-steps), [中文](README-zh.md#下一步)。*
+
 配置你的计算机或其它设备使用 VPN。请参见：
 
-**[配置并使用 IKEv2 VPN](#配置并使用-ikev2-vpn)**
+**[配置并使用 IKEv2 VPN（推荐）](#配置并使用-ikev2-vpn)**
 
 **[配置 IPsec/L2TP VPN 客户端](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients-zh.md)**
 
 **[配置 IPsec/XAuth ("Cisco IPsec") VPN 客户端](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients-xauth-zh.md)**
 
-如果在连接过程中遇到错误，请参见 [故障排除](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients-zh.md#故障排除)。
+**[:book: 电子书：搭建自己的 IPsec VPN, OpenVPN 和 WireGuard 服务器](https://mybook.to/vpnzhs)**
 
-开始使用自己的专属 VPN!
+开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
+
+喜欢这个项目？[:heart: 赞助](https://github.com/sponsors/hwdsl2?metadata_o=dz) 或 [:coffee: 支持](https://ko-fi.com/hwdsl2) 并访问 [额外内容](https://ko-fi.com/post/Support-this-project-and-get-access-to-supporter-o-X8X5FVFZC)。
 
 ## 重要提示
-
-*其他语言版本: [English](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README.md#important-notes), [中文](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md#重要提示)。*
 
 **Windows 用户** 对于 IPsec/L2TP 模式，在首次连接之前需要 [修改注册表](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients-zh.md#windows-错误-809)，以解决 VPN 服务器或客户端与 NAT（比如家用路由器）的兼容问题。
 
@@ -235,8 +239,6 @@ Status: Image is up to date for hwdsl2/ipsec-vpn-server:latest
 
 ## 配置并使用 IKEv2 VPN
 
-*其他语言版本: [English](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README.md#configure-and-use-ikev2-vpn), [中文](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md#配置并使用-ikev2-vpn)。*
-
 IKEv2 模式是比 IPsec/L2TP 和 IPsec/XAuth ("Cisco IPsec") 更佳的连接模式，该模式无需 IPsec PSK, 用户名或密码。更多信息请看[这里](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/ikev2-howto-zh.md)。
 
 首先，查看容器的日志以获取 IKEv2 配置信息：
@@ -256,7 +258,7 @@ docker exec -it ipsec-vpn-server ls -l /etc/ipsec.d
 docker cp ipsec-vpn-server:/etc/ipsec.d/vpnclient.p12 ./
 ```
 
-**下一步：** [配置你的设备](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/ikev2-howto-zh.md#配置-ikev2-vpn-客户端) 以使用 IKEv2 VPN。
+**下一步：** [配置你的设备](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/ikev2-howto-zh.md) 以使用 IKEv2 VPN。
 
 <details>
 <summary>
@@ -283,16 +285,20 @@ docker exec -it ipsec-vpn-server ikev2.sh -h
 了解如何更改 IKEv2 服务器地址。
 </summary>
 
-在某些情况下，你可能需要更改 IKEv2 服务器地址。例如切换为使用域名，或者在服务器的 IP 更改之后。要更改 IKEv2 服务器地址，首先[在容器中运行 Bash shell](docs/advanced-usage-zh.md#在容器中运行-bash-shell)，然后[按照这里的说明操作](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/ikev2-howto-zh.md#更改-ikev2-服务器地址)。请注意，这将覆盖你在 `env` 文件中指定的 `VPN_DNS_NAME` 变量，并且容器的日志将不再显示 IKEv2 的最新信息。
+在某些情况下，你可能需要更改 IKEv2 服务器地址。例如切换为使用域名，或者在服务器的 IP 更改之后。要更改 IKEv2 服务器地址，首先[在容器中运行 Bash shell](docs/advanced-usage-zh.md#在容器中运行-bash-shell)，然后[按照这里的说明操作](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/ikev2-howto-zh.md#更改-ikev2-服务器地址)。请注意，容器的日志在你重启 Docker 容器之前将不显示新的 IKEv2 服务器地址。
 </details>
 <details>
 <summary>
 移除 IKEv2 并使用自定义选项重新配置。
 </summary>
 
-在某些情况下，你可能需要移除 IKEv2 并使用自定义选项重新配置它。这可以使用辅助脚本来完成。请注意，这将覆盖你在 `env` 文件中指定的变量，例如 `VPN_DNS_NAME` 和 `VPN_CLIENT_NAME`，并且容器的日志将不再显示 IKEv2 的最新信息。
+在某些情况下，你可能需要移除 IKEv2 并使用自定义选项重新配置它。
 
 **警告：** 这将**永久删除**所有的 IKEv2 配置（包括证书和密钥），并且**不可撤销**！
+
+**选项 1:** 使用辅助脚本移除 IKEv2 并重新配置。
+
+请注意，这将覆盖你在 `env` 文件中指定的变量，例如 `VPN_DNS_NAME` 和 `VPN_CLIENT_NAME`，并且容器的日志将不再显示 IKEv2 的最新信息。
 
 ```bash
 # 移除 IKEv2 并删除所有的 IKEv2 配置
@@ -300,11 +306,33 @@ docker exec -it ipsec-vpn-server ikev2.sh --removeikev2
 # 使用自定义选项重新配置 IKEv2
 docker exec -it ipsec-vpn-server ikev2.sh
 ```
+
+**选项 2:** 移除 `ikev2-vpn-data` 并重新创建容器。
+
+1. 在纸上记下你所有的 [VPN 登录信息](#获取-vpn-登录信息)。
+1. 删除 Docker 容器：`docker rm -f ipsec-vpn-server`。
+1. 删除 `ikev2-vpn-data` 卷：`docker volume rm ikev2-vpn-data`。
+1. 更新你的 `env` 文件并添加自定义 IKEv2 选项，例如 `VPN_DNS_NAME` 和 `VPN_CLIENT_NAME`，然后重新创建容器。参见[如何使用本镜像](#如何使用本镜像)。
 </details>
 
 ## 高级用法
 
 请参见 [高级用法](docs/advanced-usage-zh.md)。
+
+- [使用其他的 DNS 服务器](docs/advanced-usage-zh.md#使用其他的-dns-服务器)
+- [不启用 privileged 模式运行](docs/advanced-usage-zh.md#不启用-privileged-模式运行)
+- [选择 VPN 模式](docs/advanced-usage-zh.md#选择-vpn-模式)
+- [访问 Docker 主机上的其它容器](docs/advanced-usage-zh.md#访问-docker-主机上的其它容器)
+- [指定 VPN 服务器的公有 IP](docs/advanced-usage-zh.md#指定-vpn-服务器的公有-ip)
+- [为 VPN 客户端指定静态 IP](docs/advanced-usage-zh.md#为-vpn-客户端指定静态-ip)
+- [自定义 VPN 子网](docs/advanced-usage-zh.md#自定义-vpn-子网)
+- [关于 host network 模式](docs/advanced-usage-zh.md#关于-host-network-模式)
+- [启用 Libreswan 日志](docs/advanced-usage-zh.md#启用-libreswan-日志)
+- [查看服务器状态](docs/advanced-usage-zh.md#查看服务器状态)
+- [从源代码构建](docs/advanced-usage-zh.md#从源代码构建)
+- [在容器中运行 Bash shell](docs/advanced-usage-zh.md#在容器中运行-bash-shell)
+- [绑定挂载 env 文件](docs/advanced-usage-zh.md#绑定挂载-env-文件)
+- [部署 Google BBR 拥塞控制](docs/advanced-usage-zh.md#部署-google-bbr-拥塞控制)
 
 ## 技术细节
 
@@ -324,7 +352,7 @@ docker exec -it ipsec-vpn-server ikev2.sh
 
 **注：** 预构建镜像中的软件组件（例如 Libreswan 和 xl2tpd）在其各自版权所有者选择的相应许可下。对于任何预构建的镜像的使用，用户有责任确保对该镜像的任何使用符合其中包含的所有软件的任何相关许可。
 
-版权所有 (C) 2016-2022 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)   
+版权所有 (C) 2016-2023 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)   
 基于 [Thomas Sarlandie 的工作](https://github.com/sarfata/voodooprivacy) (版权所有 2012)
 
 [![Creative Commons License](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)](http://creativecommons.org/licenses/by-sa/3.0/)   

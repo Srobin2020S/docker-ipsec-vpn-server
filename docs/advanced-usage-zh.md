@@ -1,6 +1,6 @@
-# 高级用法
+[English](advanced-usage.md) | [中文](advanced-usage-zh.md)
 
-*其他语言版本: [English](advanced-usage.md), [中文](advanced-usage-zh.md)。*
+# 高级用法
 
 - [使用其他的 DNS 服务器](#使用其他的-dns-服务器)
 - [不启用 privileged 模式运行](#不启用-privileged-模式运行)
@@ -15,6 +15,7 @@
 - [从源代码构建](#从源代码构建)
 - [在容器中运行 Bash shell](#在容器中运行-bash-shell)
 - [绑定挂载 env 文件](#绑定挂载-env-文件)
+- [部署 Google BBR 拥塞控制](#部署-google-bbr-拥塞控制)
 
 ## 使用其他的 DNS 服务器
 
@@ -31,7 +32,7 @@ VPN_DNS_SRV2=1.0.0.1
 
 高级用户可以在不启用 [privileged 模式](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities) 的情况下使用本镜像创建一个 Docker 容器（将以下命令中的 `./vpn.env` 替换为你自己的 `env` 文件）。
 
-**注：** 如果你的 Docker 主机运行 CentOS 8, Oracle Linux 8, Rocky Linux 或者 AlmaLinux，推荐使用 [privileged 模式](../README-zh.md#运行-ipsec-vpn-服务器)。如果你想要不启用 privileged 模式运行，则 **必须** 在创建 Docker 容器之前以及系统启动时运行 `modprobe ip_tables`。
+**注：** 如果你的 Docker 主机运行 CentOS Stream, Oracle Linux 8+, Rocky Linux 或者 AlmaLinux，推荐使用 [privileged 模式](../README-zh.md#运行-ipsec-vpn-服务器)。如果你想要不启用 privileged 模式运行，则 **必须** 在创建 Docker 容器之前以及系统启动时运行 `modprobe ip_tables`。
 
 ```
 docker run \
@@ -295,11 +296,23 @@ docker run \
     hwdsl2/ipsec-vpn-server
 ```
 
+## 部署 Google BBR 拥塞控制
+
+VPN 服务器搭建完成后，可以通过在 Docker 主机上部署 Google BBR 拥塞控制算法提升性能。
+
+这通常只需要在配置文件 `/etc/sysctl.conf` 中插入设定即可完成。但是部分 Linux 发行版可能需要额外更新 Linux 内核。
+
+详细的部署方法，可以参考[这篇文档](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/bbr-zh.md)。在完成后重启 Docker 容器：
+
+```
+docker restart ipsec-vpn-server
+```
+
 ## 授权协议
 
 **注：** 预构建镜像中的软件组件（例如 Libreswan 和 xl2tpd）在其各自版权所有者选择的相应许可下。对于任何预构建的镜像的使用，用户有责任确保对该镜像的任何使用符合其中包含的所有软件的任何相关许可。
 
-版权所有 (C) 2016-2022 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)
+版权所有 (C) 2016-2023 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)
 
 [![Creative Commons License](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)](http://creativecommons.org/licenses/by-sa/3.0/)   
 这个项目是以 [知识共享署名-相同方式共享3.0](http://creativecommons.org/licenses/by-sa/3.0/) 许可协议授权。   

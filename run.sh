@@ -8,7 +8,7 @@
 # This file is part of IPsec VPN Docker image, available at:
 # https://github.com/hwdsl2/docker-ipsec-vpn-server
 #
-# Copyright (C) 2016-2022 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2016-2023 Lin Song <linsongui@gmail.com>
 # Based on the work of Thomas Sarlandie (Copyright 2012)
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
@@ -63,9 +63,9 @@ os_arch=$(uname -m | tr -dc 'A-Za-z0-9_-')
 if [ ! -e /dev/ppp ]; then
 cat <<'EOF'
 
-WARNING: /dev/ppp is missing, and IPsec/L2TP mode may not work.
+Warning: /dev/ppp is missing, and IPsec/L2TP mode may not work.
          Please use IKEv2 or IPsec/XAuth mode to connect.
-         Debian 11/10 users, see vpnsetup.net/debian10
+         Debian 11/10 users, see https://vpnsetup.net/debian10
 EOF
 fi
 
@@ -95,7 +95,6 @@ if [ -z "$VPN_IPSEC_PSK" ] && [ -z "$VPN_USER" ] && [ -z "$VPN_PASSWORD" ]; then
     VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' </dev/urandom 2>/dev/null | head -c 20)
     VPN_USER=vpnuser
     VPN_PASSWORD=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' </dev/urandom 2>/dev/null | head -c 16)
-
     printf '%s\n' "VPN_IPSEC_PSK='$VPN_IPSEC_PSK'" > "$vpn_gen_env"
     printf '%s\n' "VPN_USER='$VPN_USER'" >> "$vpn_gen_env"
     printf '%s\n' "VPN_PASSWORD='$VPN_PASSWORD'" >> "$vpn_gen_env"
@@ -110,7 +109,6 @@ VPN_USER=$(nospaces "$VPN_USER")
 VPN_USER=$(noquotes "$VPN_USER")
 VPN_PASSWORD=$(nospaces "$VPN_PASSWORD")
 VPN_PASSWORD=$(noquotes "$VPN_PASSWORD")
-
 if [ -n "$VPN_ADDL_USERS" ] && [ -n "$VPN_ADDL_PASSWORDS" ]; then
   VPN_ADDL_USERS=$(nospaces "$VPN_ADDL_USERS")
   VPN_ADDL_USERS=$(noquotes "$VPN_ADDL_USERS")
@@ -131,82 +129,74 @@ else
   VPN_ADDL_PASSWORDS=""
   VPN_ADDL_IP_ADDRS=""
 fi
-
 if [ -n "$VPN_DNS_SRV1" ]; then
   VPN_DNS_SRV1=$(nospaces "$VPN_DNS_SRV1")
   VPN_DNS_SRV1=$(noquotes "$VPN_DNS_SRV1")
 fi
-
 if [ -n "$VPN_DNS_SRV2" ]; then
   VPN_DNS_SRV2=$(nospaces "$VPN_DNS_SRV2")
   VPN_DNS_SRV2=$(noquotes "$VPN_DNS_SRV2")
 fi
-
 if [ -n "$VPN_CLIENT_NAME" ]; then
   VPN_CLIENT_NAME=$(nospaces "$VPN_CLIENT_NAME")
   VPN_CLIENT_NAME=$(noquotes "$VPN_CLIENT_NAME")
 fi
-
 if [ -n "$VPN_DNS_NAME" ]; then
   VPN_DNS_NAME=$(nospaces "$VPN_DNS_NAME")
   VPN_DNS_NAME=$(noquotes "$VPN_DNS_NAME")
 fi
-
 if [ -n "$VPN_PUBLIC_IP" ]; then
   VPN_PUBLIC_IP=$(nospaces "$VPN_PUBLIC_IP")
   VPN_PUBLIC_IP=$(noquotes "$VPN_PUBLIC_IP")
 fi
-
 if [ -n "$VPN_ANDROID_MTU_FIX" ]; then
   VPN_ANDROID_MTU_FIX=$(nospaces "$VPN_ANDROID_MTU_FIX")
   VPN_ANDROID_MTU_FIX=$(noquotes "$VPN_ANDROID_MTU_FIX")
 fi
-
 if [ -n "$VPN_SHA2_TRUNCBUG" ]; then
   VPN_SHA2_TRUNCBUG=$(nospaces "$VPN_SHA2_TRUNCBUG")
   VPN_SHA2_TRUNCBUG=$(noquotes "$VPN_SHA2_TRUNCBUG")
 fi
-
 if [ -n "$VPN_PROTECT_CONFIG" ]; then
   VPN_PROTECT_CONFIG=$(nospaces "$VPN_PROTECT_CONFIG")
   VPN_PROTECT_CONFIG=$(noquotes "$VPN_PROTECT_CONFIG")
 fi
-
 if [ -n "$VPN_DISABLE_IPSEC_L2TP" ]; then
   VPN_DISABLE_IPSEC_L2TP=$(nospaces "$VPN_DISABLE_IPSEC_L2TP")
   VPN_DISABLE_IPSEC_L2TP=$(noquotes "$VPN_DISABLE_IPSEC_L2TP")
 fi
-
 if [ -n "$VPN_DISABLE_IPSEC_XAUTH" ]; then
   VPN_DISABLE_IPSEC_XAUTH=$(nospaces "$VPN_DISABLE_IPSEC_XAUTH")
   VPN_DISABLE_IPSEC_XAUTH=$(noquotes "$VPN_DISABLE_IPSEC_XAUTH")
 fi
-
 if [ -n "$VPN_IKEV2_ONLY" ]; then
   VPN_IKEV2_ONLY=$(nospaces "$VPN_IKEV2_ONLY")
   VPN_IKEV2_ONLY=$(noquotes "$VPN_IKEV2_ONLY")
 fi
-
+if [ -n "$VPN_ENABLE_MODP1024" ]; then
+  VPN_ENABLE_MODP1024=$(nospaces "$VPN_ENABLE_MODP1024")
+  VPN_ENABLE_MODP1024=$(noquotes "$VPN_ENABLE_MODP1024")
+fi
+if [ -n "$VPN_ENABLE_MODP1536" ]; then
+  VPN_ENABLE_MODP1536=$(nospaces "$VPN_ENABLE_MODP1536")
+  VPN_ENABLE_MODP1536=$(noquotes "$VPN_ENABLE_MODP1536")
+fi
 if [ -n "$VPN_L2TP_NET" ]; then
   VPN_L2TP_NET=$(nospaces "$VPN_L2TP_NET")
   VPN_L2TP_NET=$(noquotes "$VPN_L2TP_NET")
 fi
-
 if [ -n "$VPN_L2TP_LOCAL" ]; then
   VPN_L2TP_LOCAL=$(nospaces "$VPN_L2TP_LOCAL")
   VPN_L2TP_LOCAL=$(noquotes "$VPN_L2TP_LOCAL")
 fi
-
 if [ -n "$VPN_L2TP_POOL" ]; then
   VPN_L2TP_POOL=$(nospaces "$VPN_L2TP_POOL")
   VPN_L2TP_POOL=$(noquotes "$VPN_L2TP_POOL")
 fi
-
 if [ -n "$VPN_XAUTH_NET" ]; then
   VPN_XAUTH_NET=$(nospaces "$VPN_XAUTH_NET")
   VPN_XAUTH_NET=$(noquotes "$VPN_XAUTH_NET")
 fi
-
 if [ -n "$VPN_XAUTH_POOL" ]; then
   VPN_XAUTH_POOL=$(nospaces "$VPN_XAUTH_POOL")
   VPN_XAUTH_POOL=$(noquotes "$VPN_XAUTH_POOL")
@@ -215,17 +205,14 @@ fi
 if [ -z "$VPN_IPSEC_PSK" ] || [ -z "$VPN_USER" ] || [ -z "$VPN_PASSWORD" ]; then
   exiterr "All VPN credentials must be specified. Edit your 'env' file and re-enter them."
 fi
-
 if printf '%s' "$VPN_IPSEC_PSK $VPN_USER $VPN_PASSWORD $VPN_ADDL_USERS $VPN_ADDL_PASSWORDS" | LC_ALL=C grep -q '[^ -~]\+'; then
   exiterr "VPN credentials must not contain non-ASCII characters."
 fi
-
 case "$VPN_IPSEC_PSK $VPN_USER $VPN_PASSWORD $VPN_ADDL_USERS $VPN_ADDL_PASSWORDS" in
   *[\\\"\']*)
     exiterr "VPN credentials must not contain these special characters: \\ \" '"
     ;;
 esac
-
 if printf '%s' "$VPN_USER $VPN_ADDL_USERS" | tr ' ' '\n' | sort | uniq -c | grep -qv '^ *1 '; then
   exiterr "VPN usernames must not contain duplicates."
 fi
@@ -236,39 +223,36 @@ if [ -n "$VPN_DNS_SRV1" ]; then
   if ! check_ip "$VPN_DNS_SRV1"; then
 cat <<'EOF'
 
-WARNING: Invalid DNS server. Check VPN_DNS_SRV1 in your 'env' file.
+Warning: Invalid DNS server. Check VPN_DNS_SRV1 in your 'env' file.
 EOF
     VPN_DNS_SRV1=""
   fi
 fi
-
 if [ -n "$VPN_DNS_SRV2" ]; then
   check_ip "$VPN_DNS_SRV2" || VPN_DNS_SRV2=$(dig -t A -4 +short "$VPN_DNS_SRV2")
   if ! check_ip "$VPN_DNS_SRV2"; then
 cat <<'EOF'
 
-WARNING: Invalid DNS server. Check VPN_DNS_SRV2 in your 'env' file.
+Warning: Invalid DNS server. Check VPN_DNS_SRV2 in your 'env' file.
 EOF
     VPN_DNS_SRV2=""
   fi
 fi
-
 if [ -n "$VPN_CLIENT_NAME" ]; then
   if ! check_client_name "$VPN_CLIENT_NAME"; then
 cat <<'EOF'
 
-WARNING: Invalid client name. Use one word only, no special characters except '-' and '_'.
+Warning: Invalid client name. Use one word only, no special characters except '-' and '_'.
          Falling back to default client name 'vpnclient'.
 EOF
     VPN_CLIENT_NAME=""
   fi
 fi
-
 if [ -n "$VPN_DNS_NAME" ]; then
   if ! check_dns_name "$VPN_DNS_NAME"; then
 cat <<'EOF'
 
-WARNING: Invalid DNS name. 'VPN_DNS_NAME' must be a fully qualified domain name (FQDN).
+Warning: Invalid DNS name. 'VPN_DNS_NAME' must be a fully qualified domain name (FQDN).
          Falling back to using this server's IP address.
 EOF
     VPN_DNS_NAME=""
@@ -280,12 +264,12 @@ if [ -n "$VPN_DNS_NAME" ]; then
 else
   echo
   echo 'Trying to auto discover IP of this server...'
-
   # In case auto IP discovery fails, manually define the public IP
   # of this server in your 'env' file, as variable 'VPN_PUBLIC_IP'.
   public_ip=${VPN_PUBLIC_IP:-''}
   check_ip "$public_ip" || public_ip=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
-  check_ip "$public_ip" || public_ip=$(wget -t 3 -T 15 -qO- http://ipv4.icanhazip.com)
+  check_ip "$public_ip" || public_ip=$(wget -t 2 -T 10 -qO- http://ipv4.icanhazip.com)
+  check_ip "$public_ip" || public_ip=$(wget -t 2 -T 10 -qO- http://ip1.dynupdate.no-ip.com)
   check_ip "$public_ip" || exiterr "Cannot detect this server's public IP. Define it in your 'env' file as 'VPN_PUBLIC_IP'."
   server_addr="$public_ip"
 fi
@@ -316,29 +300,43 @@ case $VPN_SHA2_TRUNCBUG in
     sha2_truncbug=yes
     ;;
 esac
-
 disable_ipsec_l2tp=no
 case $VPN_DISABLE_IPSEC_L2TP in
   [yY][eE][sS])
     disable_ipsec_l2tp=yes
     ;;
 esac
-
 disable_ipsec_xauth=no
 case $VPN_DISABLE_IPSEC_XAUTH in
   [yY][eE][sS])
     disable_ipsec_xauth=yes
     ;;
 esac
-
 case $VPN_IKEV2_ONLY in
   [yY][eE][sS])
     disable_ipsec_l2tp=yes
     disable_ipsec_xauth=yes
     ;;
 esac
+ike_algs="aes256-sha2;modp2048,aes128-sha2;modp2048,aes256-sha1;modp2048,aes128-sha1;modp2048"
+ike_algs_addl_1=",aes256-sha2;modp1024,aes128-sha1;modp1024"
+ike_algs_addl_2=",aes256-sha2;modp1536,aes128-sha1;modp1536"
+case $VPN_ENABLE_MODP1024 in
+  [yY][eE][sS])
+    echo
+    echo "Enabling modp1024 in ipsec.conf..."
+    ike_algs="$ike_algs$ike_algs_addl_1"
+    ;;
+esac
+case $VPN_ENABLE_MODP1536 in
+  [yY][eE][sS])
+    echo
+    echo "Enabling modp1536 in ipsec.conf..."
+    ike_algs="$ike_algs$ike_algs_addl_2"
+    ;;
+esac
 
-if [ "$disable_ipsec_l2tp" = "yes" ] && [ "$disable_ipsec_xauth" = "yes" ]; then
+if [ "$disable_ipsec_l2tp" = yes ] && [ "$disable_ipsec_xauth" = yes ]; then
 cat <<'EOF'
 
 Note: Running in IKEv2-only mode via env file option.
@@ -347,16 +345,16 @@ EOF
   if ! grep -q " /etc/ipsec.d " /proc/mounts; then
 cat <<'EOF'
 
-WARNING: /etc/ipsec.d not mounted. IKEv2 setup requires a Docker volume
-         to be mounted at /etc/ipsec.d. See: vpnsetup.net/ikev2docker
+Warning: /etc/ipsec.d not mounted. IKEv2 setup requires a Docker volume
+         mounted at /etc/ipsec.d.
 EOF
   fi
-elif [ "$disable_ipsec_l2tp" = "yes" ]; then
+elif [ "$disable_ipsec_l2tp" = yes ]; then
 cat <<'EOF'
 
 Note: IPsec/L2TP mode is disabled via env file option.
 EOF
-elif [ "$disable_ipsec_xauth" = "yes" ]; then
+elif [ "$disable_ipsec_xauth" = yes ]; then
 cat <<'EOF'
 
 Note: IPsec/XAuth ("Cisco IPsec") mode is disabled via env file option.
@@ -381,10 +379,10 @@ conn shared
   rekey=no
   keyingtries=5
   dpddelay=30
-  dpdtimeout=120
+  dpdtimeout=300
   dpdaction=clear
   ikev2=never
-  ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
+  ike=$ike_algs
   phase2alg=aes_gcm-null,aes128-sha1,aes256-sha1,aes256-sha2_512,aes128-sha2,aes256-sha2
   ikelifetime=24h
   salifetime=24h
@@ -392,7 +390,7 @@ conn shared
 
 EOF
 
-if [ "$disable_ipsec_l2tp" != "yes" ]; then
+if [ "$disable_ipsec_l2tp" != yes ]; then
 cat >> /etc/ipsec.conf <<'EOF'
 conn l2tp-psk
   auto=add
@@ -403,8 +401,7 @@ conn l2tp-psk
 
 EOF
 fi
-
-if [ "$disable_ipsec_xauth" != "yes" ]; then
+if [ "$disable_ipsec_xauth" != yes ]; then
 cat >> /etc/ipsec.conf <<EOF
 conn xauth-psk
   auto=add
@@ -429,7 +426,6 @@ EOF
 if uname -r | grep -qi 'coreos'; then
   sed -i '/phase2alg/s/,aes256-sha2_512//' /etc/ipsec.conf
 fi
-
 if grep -qs ike-frag /etc/ipsec.d/ikev2.conf; then
   sed -i 's/^[[:space:]]\+ike-frag=/  fragmentation=/' /etc/ipsec.d/ikev2.conf
 fi
@@ -537,6 +533,12 @@ $syt net.ipv4.conf.default.send_redirects=0 2>/dev/null
 $syt net.ipv4.conf.default.rp_filter=0 2>/dev/null
 $syt "net.ipv4.conf.$NET_IFACE.send_redirects=0" 2>/dev/null
 $syt "net.ipv4.conf.$NET_IFACE.rp_filter=0" 2>/dev/null
+$syt net.ipv4.tcp_rmem="4096 87380 16777216" 2>/dev/null
+$syt net.ipv4.tcp_wmem="4096 87380 16777216" 2>/dev/null
+if modprobe -q tcp_bbr 2>/dev/null \
+  && printf '%s\n%s' "4.20" "$(uname -r)" | sort -C -V; then
+  $syt net.ipv4.tcp_congestion_control=bbr 2>/dev/null
+fi
 
 # Create IPTables rules
 ipi='iptables -I INPUT'
@@ -564,7 +566,9 @@ if ! iptables -t nat -C POSTROUTING -s "$L2TP_NET" -o "$NET_IFACE" -j MASQUERADE
   # $ipf 4 -i ppp+ -d "$XAUTH_NET" -j DROP
   # $ipf 5 -s "$XAUTH_NET" -o ppp+ -j DROP
   iptables -A FORWARD -j DROP
-  $ipp -s "$XAUTH_NET" -o "$NET_IFACE" -m policy --dir out --pol none -j MASQUERADE
+  if ! $ipp -s "$XAUTH_NET" -o "$NET_IFACE" -m policy --dir out --pol none -j MASQUERADE; then
+    $ipp -s "$XAUTH_NET" -o "$NET_IFACE" ! -d "$XAUTH_NET" -j MASQUERADE
+  fi
   $ipp -s "$L2TP_NET" -o "$NET_IFACE" -j MASQUERADE
 fi
 
@@ -615,7 +619,7 @@ else
   server_text="Server IP"
 fi
 
-if [ "$disable_ipsec_l2tp" != "yes" ] || [ "$disable_ipsec_xauth" != "yes" ]; then
+if [ "$disable_ipsec_l2tp" != yes ] || [ "$disable_ipsec_xauth" != yes ]; then
 cat <<EOF
 
 ================================================
@@ -629,7 +633,6 @@ IPsec PSK: $VPN_IPSEC_PSK
 Username: $VPN_USER
 Password: $VPN_PASSWORD
 EOF
-
   if [ -n "$VPN_ADDL_USERS" ] && [ -n "$VPN_ADDL_PASSWORDS" ]; then
     count=1
     addl_user=$(printf '%s' "$VPN_ADDL_USERS" | cut -d ' ' -f 1)
@@ -647,20 +650,11 @@ EOF
       addl_password=$(printf '%s' "$VPN_ADDL_PASSWORDS" | cut -s -d ' ' -f "$count")
     done
   fi
-
 cat <<'EOF'
 
 Write these down. You'll need them to connect!
 
-Important notes:   vpnsetup.net/notes2
-Setup VPN clients: vpnsetup.net/clients
-EOF
-
-  if ! grep -q " /etc/ipsec.d " /proc/mounts; then
-    echo "IKEv2 guide:       vpnsetup.net/ikev2docker"
-  fi
-
-cat <<'EOF'
+VPN client setup: https://vpnsetup.net/clients2
 
 ================================================
 EOF
@@ -688,11 +682,11 @@ if grep -q " /etc/ipsec.d " /proc/mounts && [ -s "$ikev2_sh" ] && [ ! -f "$ikev2
   fi
   chmod 600 "$ikev2_log"
 fi
-if [ "$status" = "0" ] && [ -f "$ikev2_conf" ] && [ -s "$ikev2_log" ]; then
+if [ "$status" = 0 ] && [ -f "$ikev2_conf" ] && [ -s "$ikev2_log" ]; then
   status=2
   status_text="IKEv2 is already set up."
 fi
-if [ "$status" = "1" ] || [ "$status" = "2" ]; then
+if [ "$status" = 1 ] || [ "$status" = 2 ]; then
 cat <<EOF
 
 ================================================
@@ -702,13 +696,26 @@ $status_text Details for IKEv2 mode:
 EOF
   sed -n '/VPN server address:/,/Next steps:/p' "$ikev2_log"
 cat <<'EOF'
-https://vpnsetup.net/ikev2docker
+https://vpnsetup.net/clients2
 
 ================================================
 
 EOF
 else
   echo
+fi
+
+if [ "$status" = 2 ] && [ -n "$VPN_DNS_NAME" ]; then
+  server_addr_cur=$(grep -s "leftcert=" /etc/ipsec.d/ikev2.conf | cut -f2 -d=)
+  if [ "$VPN_DNS_NAME" != "$server_addr_cur" ]; then
+cat <<'EOF'
+Warning: The VPN_DNS_NAME variable you specified has no effect
+         for IKEv2 mode, because IKEv2 is already set up in this
+         container. To change the IKEv2 server address, see:
+         https://vpnsetup.net/ikev2docker
+
+EOF
+  fi
 fi
 
 # Check for new Libreswan version
@@ -719,13 +726,13 @@ if [ ! -f "$ts_file" ] || [ "$(find "$ts_file" -mmin +10080)" ]; then
   swan_ver=$(printf '%s' "$ipsec_ver" | sed -e 's/.*Libreswan U\?//' -e 's/\( (\|\/K\).*//')
   base_url="https://github.com/hwdsl2/vpn-extras/releases/download/v1.0.0"
   swan_ver_url="$base_url/upg-docker-$os_type-$os_arch-swanver"
-  swan_ver_latest=$(wget -t 3 -T 15 -qO- "$swan_ver_url" | head -n 1)
+  swan_ver_latest=$(wget -t 2 -T 10 -qO- "$swan_ver_url" | head -n 1)
   if printf '%s' "$swan_ver_latest" | grep -Eq '^([3-9]|[1-9][0-9]{1,2})(\.([0-9]|[1-9][0-9]{1,2})){1,2}$' \
     && [ -n "$swan_ver" ] && [ "$swan_ver" != "$swan_ver_latest" ] \
     && printf '%s\n%s' "$swan_ver" "$swan_ver_latest" | sort -C -V; then
 cat <<EOF
 Note: A newer version of Libreswan ($swan_ver_latest) is available.
-To update this Docker image, see: vpnsetup.net/dockerupdate
+To update this Docker image, see: https://vpnsetup.net/dockerupdate
 
 EOF
   fi
