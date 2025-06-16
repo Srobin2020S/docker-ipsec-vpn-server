@@ -6,11 +6,11 @@
 
 使用这个 Docker 镜像快速搭建 IPsec VPN 服务器。支持 IPsec/L2TP，Cisco IPsec 和 IKEv2 协议。
 
-本镜像以 Alpine 3.17 或 Debian 11 为基础，并使用 [Libreswan](https://libreswan.org) (IPsec VPN 软件) 和 [xl2tpd](https://github.com/xelerance/xl2tpd) (L2TP 服务进程)。
+本镜像以 Alpine 3.21 或 Debian 12 为基础，并使用 [Libreswan](https://libreswan.org) (IPsec VPN 软件) 和 [xl2tpd](https://github.com/xelerance/xl2tpd) (L2TP 服务进程)。
 
 IPsec VPN 可以加密你的网络流量，以防止在通过因特网传送时，你和 VPN 服务器之间的任何人对你的数据的未经授权的访问。在使用不安全的网络时，这是特别有用的，例如在咖啡厅，机场或旅馆房间。
 
-[**&raquo; 另见：IPsec VPN 服务器一键安装脚本**](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/README-zh.md)
+**[&raquo; :book: Book: 搭建自己的 VPN 服务器分步指南](docs/vpn-book-zh.md)** [[中文](https://books2read.com/vpnguidezh) | [English](https://books2read.com/vpnguide?store=amazon) | [Español](https://books2read.com/vpnguidees?store=amazon) | [Deutsch](https://books2read.com/vpnguidede?store=amazon) | [Français](https://books2read.com/vpnguidefr?store=amazon) | [Italiano](https://books2read.com/vpnguideit?store=amazon) | [日本語](https://books2read.com/vpnguideja?store=amazon)]
 
 ## 快速开始
 
@@ -30,7 +30,7 @@ docker run \
 
 你的 VPN 登录凭证将会被自动随机生成。请参见 [获取 VPN 登录信息](#获取-vpn-登录信息)。
 
-要了解更多有关如何使用本镜像的信息，请继续阅读以下部分。
+另外，你也可以在不使用 Docker 的情况下[安装 IPsec VPN](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/README-zh.md)。要了解更多有关如何使用本镜像的信息，请继续阅读以下部分。
 
 ## 功能特性
 
@@ -66,20 +66,39 @@ docker image tag quay.io/hwdsl2/ipsec-vpn-server hwdsl2/ipsec-vpn-server
 
 ### 镜像对照表
 
-有两个预构建的镜像可用。默认的基于 Alpine 的镜像大小仅 ~17MB。
+有两个预构建的镜像可用。默认的基于 Alpine 的镜像大小仅 ~18 MB。
 
 |                 | 基于 Alpine               | 基于 Debian                     |
 | --------------- | ------------------------ | ------------------------------ |
 | 镜像名称          | hwdsl2/ipsec-vpn-server  | hwdsl2/ipsec-vpn-server:debian |
-| 压缩后大小        | ~ 17 MB                  | ~ 62 MB                        |
-| 基础镜像          | Alpine Linux 3.17        | Debian Linux 11                |
+| 压缩后大小        | ~ 18 MB                  | ~ 62 MB                        |
+| 基础镜像          | Alpine Linux 3.21        | Debian Linux 12                |
 | 系统架构          | amd64, arm64, arm/v7     | amd64, arm64, arm/v7           |
-| Libreswan 版本   | 4.11                     | 4.11                           |
+| Libreswan 版本   | 5.2                      | 5.2                            |
 | IPsec/L2TP      | ✅                       | ✅                              |
 | Cisco IPsec     | ✅                       | ✅                              |
 | IKEv2           | ✅                       | ✅                              |
 
 **注：** 要使用基于 Debian 的镜像，请将本自述文件中所有的 `hwdsl2/ipsec-vpn-server` 替换为 `hwdsl2/ipsec-vpn-server:debian`。这些镜像当前与 Synology NAS 系统不兼容。
+
+<details>
+<summary>
+我需要使用较旧版本的 Libreswan 版本 4。
+</summary>
+
+一般建议使用最新的 [Libreswan](https://libreswan.org/) 版本 5，它是本项目的默认版本。但是，如果你想要使用较旧版本的 Libreswan 版本 4，你可以从源代码构建 Docker 镜像：
+
+```
+git clone https://github.com/hwdsl2/docker-ipsec-vpn-server
+cd docker-ipsec-vpn-server
+# Specify Libreswan version 4
+sed -i 's/SWAN_VER=5\..*/SWAN_VER=4.15/' Dockerfile Dockerfile.debian
+# To build Alpine-based image
+docker build -t hwdsl2/ipsec-vpn-server .
+# To build Debian-based image
+docker build -f Dockerfile.debian -t hwdsl2/ipsec-vpn-server:debian .
+```
+</details>
 
 ## 如何使用本镜像
 
@@ -108,9 +127,13 @@ VPN_ADDL_PASSWORDS=additional_password_1 additional_password_2
 
 **注：** 如果在创建 Docker 容器后修改 `env` 文件，则必须删除并重新创建容器才能使更改生效。参见[更新 Docker 镜像](#更新-docker-镜像)。
 
+### 其他环境变量
+
+高级用户可以指定一个域名，客户端名称和/或另外的 DNS 服务器。这是可选的。
+
 <details>
 <summary>
-:information_source: 你可以指定一个域名，客户端名称和/或另外的 DNS 服务器。这是可选的。:information_source:
+了解如何指定一个域名，客户端名称和/或另外的 DNS 服务器。
 </summary>
 
 高级用户可以指定一个域名作为 IKEv2 服务器地址。这是可选的。该域名必须是一个全称域名 (FQDN)。示例如下：
@@ -131,6 +154,8 @@ VPN_CLIENT_NAME=your_client_name
 VPN_DNS_SRV1=1.1.1.1
 VPN_DNS_SRV2=1.0.0.1
 ```
+
+有关详细信息以及一些流行的公共 DNS 提供商的列表，参见[使用其他的 DNS 服务器](docs/advanced-usage-zh.md)。
 
 默认情况下，导入 IKEv2 客户端配置时不需要密码。你可以选择使用随机密码保护客户端配置文件。
 
@@ -203,11 +228,9 @@ docker cp ipsec-vpn-server:/etc/ipsec.d/vpn-gen.env ./
 
 **[配置 IPsec/XAuth ("Cisco IPsec") VPN 客户端](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients-xauth-zh.md)**
 
-**[:book: 电子书：搭建自己的 IPsec VPN, OpenVPN 和 WireGuard 服务器](https://mybook.to/vpnzhs)**
+**阅读 [:book: VPN book](docs/vpn-book-zh.md) 以访问 [额外内容](https://ko-fi.com/post/Support-this-project-and-get-access-to-supporter-o-X8X5FVFZC)。**
 
 开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
-
-喜欢这个项目？[:heart: 赞助](https://github.com/sponsors/hwdsl2?metadata_o=dz) 或 [:coffee: 支持](https://ko-fi.com/hwdsl2) 并访问 [额外内容](https://ko-fi.com/post/Support-this-project-and-get-access-to-supporter-o-X8X5FVFZC)。
 
 ## 重要提示
 
@@ -326,6 +349,7 @@ docker exec -it ipsec-vpn-server ikev2.sh
 - [指定 VPN 服务器的公有 IP](docs/advanced-usage-zh.md#指定-vpn-服务器的公有-ip)
 - [为 VPN 客户端指定静态 IP](docs/advanced-usage-zh.md#为-vpn-客户端指定静态-ip)
 - [自定义 VPN 子网](docs/advanced-usage-zh.md#自定义-vpn-子网)
+- [VPN 分流](docs/advanced-usage-zh.md#vpn-分流)
 - [关于 host network 模式](docs/advanced-usage-zh.md#关于-host-network-模式)
 - [启用 Libreswan 日志](docs/advanced-usage-zh.md#启用-libreswan-日志)
 - [查看服务器状态](docs/advanced-usage-zh.md#查看服务器状态)
@@ -352,7 +376,7 @@ docker exec -it ipsec-vpn-server ikev2.sh
 
 **注：** 预构建镜像中的软件组件（例如 Libreswan 和 xl2tpd）在其各自版权所有者选择的相应许可下。对于任何预构建的镜像的使用，用户有责任确保对该镜像的任何使用符合其中包含的所有软件的任何相关许可。
 
-版权所有 (C) 2016-2023 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)   
+版权所有 (C) 2016-2025 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)   
 基于 [Thomas Sarlandie 的工作](https://github.com/sarfata/voodooprivacy) (版权所有 2012)
 
 [![Creative Commons License](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)](http://creativecommons.org/licenses/by-sa/3.0/)   

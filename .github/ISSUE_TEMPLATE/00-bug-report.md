@@ -17,7 +17,7 @@ assignees: ''
 - [ ] This bug is about the IPsec VPN server Docker image, and not IPsec VPN itself
 
 <!---
-If you found a reproducible bug for the IPsec VPN, open a bug report at https://github.com/libreswan/libreswan. Ask VPN-related questions on the [Libreswan](https://lists.libreswan.org/mailman/listinfo/swan) or [strongSwan](https://lists.strongswan.org/mailman/listinfo/users) users mailing list, or search e.g. [Stack Overflow](https://stackoverflow.com/questions/tagged/vpn).
+If you found a reproducible bug for the IPsec VPN, open a bug report at https://github.com/libreswan/libreswan. Ask VPN-related questions on the [Libreswan](https://lists.libreswan.org) or [strongSwan](https://lists.strongswan.org) users mailing list, or search e.g. [Stack Overflow](https://stackoverflow.com/questions/tagged/vpn).
 --->
 
 **Describe the issue**
@@ -36,7 +36,7 @@ A clear and concise description of what you expected to happen.
 [Enable logs](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/docs/advanced-usage.md#enable-libreswan-logs), check [VPN status](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients.md#check-logs-and-vpn-status), and add error logs to help explain the problem, if applicable.
 
 **Server (please complete the following information)**
-- Docker host OS: [e.g. Ubuntu 20.04]
+- Docker host OS: [e.g. Ubuntu 24.04]
 - Hosting provider (if applicable): [e.g. GCP, AWS]
 
 **Client (please complete the following information)**

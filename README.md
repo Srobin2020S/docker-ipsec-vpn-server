@@ -6,11 +6,11 @@
 
 Docker image to run an IPsec VPN server, with IPsec/L2TP, Cisco IPsec and IKEv2.
 
-Based on Alpine 3.17 or Debian 11 with [Libreswan](https://libreswan.org) (IPsec VPN software) and [xl2tpd](https://github.com/xelerance/xl2tpd) (L2TP daemon).
+Based on Alpine 3.21 or Debian 12 with [Libreswan](https://libreswan.org) (IPsec VPN software) and [xl2tpd](https://github.com/xelerance/xl2tpd) (L2TP daemon).
 
 An IPsec VPN encrypts your network traffic, so that nobody between you and the VPN server can eavesdrop on your data as it travels via the Internet. This is especially useful when using unsecured networks, e.g. at coffee shops, airports or hotel rooms.
 
-[**&raquo; See also: IPsec VPN Server Auto Setup Scripts**](https://github.com/hwdsl2/setup-ipsec-vpn)
+**[&raquo; :book: Book: Build Your Own VPN Server](docs/vpn-book.md)** [[English](https://books2read.com/vpnguide?store=amazon) | [中文](https://books2read.com/vpnguidezh) | [Español](https://books2read.com/vpnguidees?store=amazon) | [Deutsch](https://books2read.com/vpnguidede?store=amazon) | [Français](https://books2read.com/vpnguidefr?store=amazon) | [Italiano](https://books2read.com/vpnguideit?store=amazon) | [日本語](https://books2read.com/vpnguideja?store=amazon)]
 
 ## Quick start
 
@@ -30,7 +30,7 @@ docker run \
 
 Your VPN login details will be randomly generated. See [Retrieve VPN login details](#retrieve-vpn-login-details).
 
-To learn more about how to use this image, read the sections below.
+Alternatively, you may [set up IPsec VPN without Docker](https://github.com/hwdsl2/setup-ipsec-vpn). To learn more about how to use this image, read the sections below.
 
 ## Features
 
@@ -66,20 +66,39 @@ Advanced users can [build from source code](docs/advanced-usage.md#build-from-so
 
 ### Image comparison
 
-Two pre-built images are available. The default Alpine-based image is only ~17MB.
+Two pre-built images are available. The default Alpine-based image is only ~18 MB.
 
 |                   | Alpine-based             | Debian-based                   |
 | ----------------- | ------------------------ | ------------------------------ |
 | Image name        | hwdsl2/ipsec-vpn-server  | hwdsl2/ipsec-vpn-server:debian |
-| Compressed size   | ~ 17 MB                  | ~ 62 MB                        |
-| Base image        | Alpine Linux 3.17        | Debian Linux 11                |
+| Compressed size   | ~ 18 MB                  | ~ 62 MB                        |
+| Base image        | Alpine Linux 3.21        | Debian Linux 12                |
 | Platforms         | amd64, arm64, arm/v7     | amd64, arm64, arm/v7           |
-| Libreswan version | 4.11                     | 4.11                           |
+| Libreswan version | 5.2                      | 5.2                            |
 | IPsec/L2TP        | ✅                       | ✅                              |
 | Cisco IPsec       | ✅                       | ✅                              |
 | IKEv2             | ✅                       | ✅                              |
 
 **Note:** To use the Debian-based image, replace every `hwdsl2/ipsec-vpn-server` with `hwdsl2/ipsec-vpn-server:debian` in this README. These images are not currently compatible with Synology NAS systems.
+
+<details>
+<summary>
+I want to use the older Libreswan version 4.
+</summary>
+
+It is generally recommended to use the latest [Libreswan](https://libreswan.org/) version 5, which is the default version in this project. However, if you want to use the older Libreswan version 4, you can build the Docker image from source code:
+
+```
+git clone https://github.com/hwdsl2/docker-ipsec-vpn-server
+cd docker-ipsec-vpn-server
+# Specify Libreswan version 4
+sed -i 's/SWAN_VER=5\..*/SWAN_VER=4.15/' Dockerfile Dockerfile.debian
+# To build Alpine-based image
+docker build -t hwdsl2/ipsec-vpn-server .
+# To build Debian-based image
+docker build -f Dockerfile.debian -t hwdsl2/ipsec-vpn-server:debian .
+```
+</details>
 
 ## How to use this image
 
@@ -108,9 +127,13 @@ VPN_ADDL_PASSWORDS=additional_password_1 additional_password_2
 
 **Note:** If you modify the `env` file after the Docker container is already created, you must remove and re-create the container for the changes to take effect. Refer to [Update Docker image](#update-docker-image).
 
+### Additional environment variables
+
+Advanced users can optionally specify a DNS name, client name and/or custom DNS servers.
+
 <details>
 <summary>
-:information_source: You may optionally specify a DNS name, client name and/or custom DNS servers. :information_source:
+Learn how to specify a DNS name, client name and/or custom DNS servers.
 </summary>
 
 Advanced users can optionally specify a DNS name for the IKEv2 server address. The DNS name must be a fully qualified domain name (FQDN). Example:
@@ -131,6 +154,8 @@ By default, clients are set to use [Google Public DNS](https://developers.google
 VPN_DNS_SRV1=1.1.1.1
 VPN_DNS_SRV2=1.0.0.1
 ```
+
+For more details and a list of some popular public DNS providers, see [Use alternative DNS servers](docs/advanced-usage.md).
 
 By default, no password is required when importing IKEv2 client configuration. You can choose to protect client config files using a random password.
 
@@ -203,11 +228,9 @@ Get your computer or device to use the VPN. Please refer to:
 
 **[Configure IPsec/XAuth ("Cisco IPsec") VPN Clients](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients-xauth.md)**
 
-**[:book: Book: Set Up Your Own IPsec VPN, OpenVPN and WireGuard Server](https://mybook.to/vpn)**
+**Read [:book: VPN book](docs/vpn-book.md) to access [extra content](https://ko-fi.com/post/Support-this-project-and-get-access-to-supporter-o-O5O7FVF8J).**
 
 Enjoy your very own VPN! :sparkles::tada::rocket::sparkles:
-
-Like this project? [:heart: Sponsor](https://github.com/sponsors/hwdsl2?metadata_o=d) or [:coffee: Support](https://ko-fi.com/hwdsl2) and access [extra content](https://ko-fi.com/post/Support-this-project-and-get-access-to-supporter-o-O5O7FVF8J).
 
 ## Important notes
 
@@ -327,6 +350,7 @@ See [Advanced usage](docs/advanced-usage.md).
 - [Specify VPN server's public IP](docs/advanced-usage.md#specify-vpn-servers-public-ip)
 - [Assign static IPs to VPN clients](docs/advanced-usage.md#assign-static-ips-to-vpn-clients)
 - [Customize VPN subnets](docs/advanced-usage.md#customize-vpn-subnets)
+- [Split tunneling](docs/advanced-usage.md#split-tunneling)
 - [About host network mode](docs/advanced-usage.md#about-host-network-mode)
 - [Enable Libreswan logs](docs/advanced-usage.md#enable-libreswan-logs)
 - [Check server status](docs/advanced-usage.md#check-server-status)
@@ -353,7 +377,7 @@ The ports that are exposed for this container to work are:
 
 **Note:** The software components inside the pre-built image (such as Libreswan and xl2tpd) are under the respective licenses chosen by their respective copyright holders. As for any pre-built image usage, it is the image user's responsibility to ensure that any use of this image complies with any relevant licenses for all software contained within.
 
-Copyright (C) 2016-2023 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)   
+Copyright (C) 2016-2025 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)   
 Based on [the work of Thomas Sarlandie](https://github.com/sarfata/voodooprivacy) (Copyright 2012)
 
 [![Creative Commons License](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)](http://creativecommons.org/licenses/by-sa/3.0/)   

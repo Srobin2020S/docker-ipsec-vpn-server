@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2021-2025 Lin Song <linsongui@gmail.com>
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 # Unported License: http://creativecommons.org/licenses/by-sa/3.0/
@@ -7,23 +7,27 @@
 # Attribution required: please include my name in any derivative and let me
 # know how you have improved it!
 
-FROM alpine:3.17
+FROM alpine:3.21
 
-ENV SWAN_VER 4.11
+ENV SWAN_VER=5.2
 WORKDIR /opt/src
 
 RUN set -x \
     && apk add --no-cache \
-         bash bind-tools coreutils openssl uuidgen wget xl2tpd iproute2 \
-         libcap-ng libcurl libevent linux-pam musl nspr nss nss-tools openrc \
+         bash bind-tools coreutils openssl uuidgen wget xl2tpd iptables iptables-legacy \
+         iproute2 libcap-ng libcurl libevent linux-pam musl nspr nss nss-tools openrc \
          bison flex gcc make libc-dev bsd-compat-headers linux-pam-dev \
          nss-dev libcap-ng-dev libevent-dev curl-dev nspr-dev \
+    && cd /sbin \
+    && for fn in iptables iptables-save iptables-restore; do ln -fs xtables-legacy-multi "$fn"; done \
+    && cd /opt/src \
     && wget -t 3 -T 30 -nv -O libreswan.tar.gz "https://github.com/libreswan/libreswan/archive/v${SWAN_VER}.tar.gz" \
     || wget -t 3 -T 30 -nv -O libreswan.tar.gz "https://download.libreswan.org/libreswan-${SWAN_VER}.tar.gz" \
     && tar xzf libreswan.tar.gz \
     && rm -f libreswan.tar.gz \
     && cd "libreswan-${SWAN_VER}" \
-    && printf 'WERROR_CFLAGS=-w -s\nUSE_DNSSEC=false\nUSE_DH2=true\nFINALNSSDIR=/etc/ipsec.d\n' > Makefile.inc.local \
+    && printf 'WERROR_CFLAGS=-w -s\nUSE_DNSSEC=false\nUSE_DH2=true\n' > Makefile.inc.local \
+    && printf 'FINALNSSDIR=/etc/ipsec.d\nNSSDIR=/etc/ipsec.d\n' >> Makefile.inc.local \
     && make -s base \
     && make -s install-base \
     && cd /opt/src \
@@ -34,7 +38,7 @@ RUN set -x \
          bison flex gcc make libc-dev bsd-compat-headers linux-pam-dev \
          nss-dev libcap-ng-dev libevent-dev curl-dev nspr-dev
 
-RUN wget -t 3 -T 30 -nv -O /opt/src/ikev2.sh https://github.com/hwdsl2/setup-ipsec-vpn/raw/2039f91151c4a339c57fff221d6b540d523dd262/extras/ikev2setup.sh \
+RUN wget -t 3 -T 30 -nv -O /opt/src/ikev2.sh https://github.com/hwdsl2/setup-ipsec-vpn/raw/909bf12175252e2e167c36c3b12d174c01f0824f/extras/ikev2setup.sh \
     && chmod +x /opt/src/ikev2.sh \
     && ln -s /opt/src/ikev2.sh /usr/bin
 
@@ -46,7 +50,7 @@ CMD ["/opt/src/run.sh"]
 ARG BUILD_DATE
 ARG VERSION
 ARG VCS_REF
-ENV IMAGE_VER $BUILD_DATE
+ENV IMAGE_VER=$BUILD_DATE
 
 LABEL maintainer="Lin Song <linsongui@gmail.com>" \
     org.opencontainers.image.created="$BUILD_DATE" \

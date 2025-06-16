@@ -8,7 +8,7 @@
 # This file is part of IPsec VPN Docker image, available at:
 # https://github.com/hwdsl2/docker-ipsec-vpn-server
 #
-# Copyright (C) 2016-2023 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2016-2024 Lin Song <linsongui@gmail.com>
 # Based on the work of Thomas Sarlandie (Copyright 2012)
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
@@ -28,6 +28,11 @@ noquotes2() { printf '%s' "$1" | sed -e 's/" "/ /g' -e "s/' '/ /g"; }
 check_ip() {
   IP_REGEX='^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
   printf '%s' "$1" | tr -d '\n' | grep -Eq "$IP_REGEX"
+}
+
+check_cidr() {
+  CIDR_REGEX='^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(/(3[0-2]|[1-2][0-9]|[0-9]))$'
+  printf '%s' "$1" | tr -d '\n' | grep -Eq "$CIDR_REGEX"
 }
 
 check_dns_name() {
@@ -161,6 +166,10 @@ if [ -n "$VPN_PROTECT_CONFIG" ]; then
   VPN_PROTECT_CONFIG=$(nospaces "$VPN_PROTECT_CONFIG")
   VPN_PROTECT_CONFIG=$(noquotes "$VPN_PROTECT_CONFIG")
 fi
+if [ -n "$VPN_SPLIT_IKEV2" ]; then
+  VPN_SPLIT_IKEV2=$(nospaces "$VPN_SPLIT_IKEV2")
+  VPN_SPLIT_IKEV2=$(noquotes "$VPN_SPLIT_IKEV2")
+fi
 if [ -n "$VPN_DISABLE_IPSEC_L2TP" ]; then
   VPN_DISABLE_IPSEC_L2TP=$(nospaces "$VPN_DISABLE_IPSEC_L2TP")
   VPN_DISABLE_IPSEC_L2TP=$(noquotes "$VPN_DISABLE_IPSEC_L2TP")
@@ -258,19 +267,29 @@ EOF
     VPN_DNS_NAME=""
   fi
 fi
+if [ -n "$VPN_SPLIT_IKEV2" ]; then
+  if ! check_cidr "$VPN_SPLIT_IKEV2"; then
+cat <<'EOF'
+
+Warning: Invalid split VPN subnet. Check VPN_SPLIT_IKEV2 in your 'env' file.
+EOF
+    VPN_SPLIT_IKEV2=""
+  fi
+fi
+
+echo
+echo 'Trying to auto discover IP of this server...'
+# In case auto IP discovery fails, manually define the public IP
+# of this server in your 'env' file, as variable 'VPN_PUBLIC_IP'.
+public_ip=${VPN_PUBLIC_IP:-''}
+check_ip "$public_ip" || public_ip=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
+check_ip "$public_ip" || public_ip=$(wget -t 2 -T 10 -qO- http://ipv4.icanhazip.com)
+check_ip "$public_ip" || public_ip=$(wget -t 2 -T 10 -qO- http://ip1.dynupdate.no-ip.com)
+check_ip "$public_ip" || exiterr "Cannot detect this server's public IP. Define it in your 'env' file as 'VPN_PUBLIC_IP'."
 
 if [ -n "$VPN_DNS_NAME" ]; then
   server_addr="$VPN_DNS_NAME"
 else
-  echo
-  echo 'Trying to auto discover IP of this server...'
-  # In case auto IP discovery fails, manually define the public IP
-  # of this server in your 'env' file, as variable 'VPN_PUBLIC_IP'.
-  public_ip=${VPN_PUBLIC_IP:-''}
-  check_ip "$public_ip" || public_ip=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
-  check_ip "$public_ip" || public_ip=$(wget -t 2 -T 10 -qO- http://ipv4.icanhazip.com)
-  check_ip "$public_ip" || public_ip=$(wget -t 2 -T 10 -qO- http://ip1.dynupdate.no-ip.com)
-  check_ip "$public_ip" || exiterr "Cannot detect this server's public IP. Define it in your 'env' file as 'VPN_PUBLIC_IP'."
   server_addr="$public_ip"
 fi
 
@@ -366,12 +385,13 @@ cat > /etc/ipsec.conf <<EOF
 version 2.0
 
 config setup
+  ikev1-policy=accept
   virtual-private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!$L2TP_NET,%v4:!$XAUTH_NET
   uniqueids=no
 
 conn shared
   left=%defaultroute
-  leftid=$server_addr
+  leftid=$public_ip
   right=%any
   encapsulation=yes
   authby=secret
@@ -545,6 +565,7 @@ ipi='iptables -I INPUT'
 ipf='iptables -I FORWARD'
 ipp='iptables -t nat -I POSTROUTING'
 res='RELATED,ESTABLISHED'
+modprobe -q ip_tables 2>/dev/null
 if ! iptables -t nat -C POSTROUTING -s "$L2TP_NET" -o "$NET_IFACE" -j MASQUERADE 2>/dev/null; then
   $ipi 1 -p udp --dport 1701 -m policy --dir in --pol none -j DROP
   $ipi 2 -m conntrack --ctstate INVALID -j DROP
@@ -668,6 +689,9 @@ ikev2_log="/etc/ipsec.d/ikev2setup.log"
 if grep -q " /etc/ipsec.d " /proc/mounts && [ -s "$ikev2_sh" ] && [ ! -f "$ikev2_conf" ]; then
   echo
   echo "Setting up IKEv2. This may take a few moments..."
+  if [ -n "$VPN_SPLIT_IKEV2" ]; then
+    sed -i "s|^  leftsubnet=0\.0\.0\.0/0$|  leftsubnet=$VPN_SPLIT_IKEV2|g" "$ikev2_sh"
+  fi
   if VPN_DNS_NAME="$VPN_DNS_NAME" VPN_PUBLIC_IP="$public_ip" \
     VPN_CLIENT_NAME="$VPN_CLIENT_NAME" VPN_XAUTH_POOL="$VPN_XAUTH_POOL" \
     VPN_DNS_SRV1="$VPN_DNS_SRV1" VPN_DNS_SRV2="$VPN_DNS_SRV2" \
@@ -706,7 +730,7 @@ else
 fi
 
 if [ "$status" = 2 ] && [ -n "$VPN_DNS_NAME" ]; then
-  server_addr_cur=$(grep -s "leftcert=" /etc/ipsec.d/ikev2.conf | cut -f2 -d=)
+  server_addr_cur=$(grep -s "leftcert=" /etc/ipsec.d/ikev2.conf | cut -f2 -d= | head -n 1)
   if [ "$VPN_DNS_NAME" != "$server_addr_cur" ]; then
 cat <<'EOF'
 Warning: The VPN_DNS_NAME variable you specified has no effect

@@ -9,6 +9,7 @@
 - [Specify VPN server's public IP](#specify-vpn-servers-public-ip)
 - [Assign static IPs to VPN clients](#assign-static-ips-to-vpn-clients)
 - [Customize VPN subnets](#customize-vpn-subnets)
+- [Split tunneling](#split-tunneling)
 - [About host network mode](#about-host-network-mode)
 - [Enable Libreswan logs](#enable-libreswan-logs)
 - [Check server status](#check-server-status)
@@ -19,14 +20,28 @@
 
 ## Use alternative DNS servers
 
-Clients are set to use [Google Public DNS](https://developers.google.com/speed/public-dns/) when the VPN is active. If another DNS provider is preferred, define `VPN_DNS_SRV1` and optionally `VPN_DNS_SRV2` in your `env` file, then follow [instructions](../README.md#update-docker-image) to re-create the Docker container. For example, if you want to use [Cloudflare's DNS service](https://1.1.1.1/dns/):
+By default, clients are set to use [Google Public DNS](https://developers.google.com/speed/public-dns/) when the VPN is active. If another DNS provider is preferred, define `VPN_DNS_SRV1` and optionally `VPN_DNS_SRV2` in your `env` file, then follow [instructions](../README.md#update-docker-image) to re-create the Docker container. Example:
 
 ```
 VPN_DNS_SRV1=1.1.1.1
 VPN_DNS_SRV2=1.0.0.1
 ```
 
+Use `VPN_DNS_SRV1` to specify the primary DNS server, and `VPN_DNS_SRV2` to specify the secondary DNS server (optional).
+
 Note that if IKEv2 is already set up in the Docker container, you will also need to edit `/etc/ipsec.d/ikev2.conf` inside the Docker container and replace `8.8.8.8` and `8.8.4.4` with your alternative DNS server(s), then restart the Docker container.
+
+Below is a list of some popular public DNS providers for your reference.
+
+| Provider | Primary DNS | Secondary DNS | Notes |
+| -------- | ----------- | ------------- | ----- |
+| [Google Public DNS](https://developers.google.com/speed/public-dns) | 8.8.8.8 | 8.8.4.4 | Default in this project |
+| [Cloudflare](https://1.1.1.1/dns/) | 1.1.1.1 | 1.0.0.1 | See also: [Cloudflare for families](https://1.1.1.1/family/) |
+| [Quad9](https://www.quad9.net) | 9.9.9.9 | 149.112.112.112 | Blocks malicious domains |
+| [OpenDNS](https://www.opendns.com/home-internet-security/) | 208.67.222.222 | 208.67.220.220 | Blocks phishing domains, configurable. |
+| [CleanBrowsing](https://cleanbrowsing.org/filters/) | 185.228.168.9 | 185.228.169.9 | [Domain filters](https://cleanbrowsing.org/filters/) available |
+| [NextDNS](https://nextdns.io/?from=bg25bwmp) | Varies | Varies | Ad blocking, free tier available. [Learn more](https://nextdns.io/?from=bg25bwmp). |
+| [Control D](https://controld.com/free-dns) | Varies | Varies | Ad blocking, configurable. [Learn more](https://controld.com/free-dns). |
 
 ## Run without privileged mode
 
@@ -51,12 +66,10 @@ docker run \
     --sysctl net.ipv4.conf.default.accept_redirects=0 \
     --sysctl net.ipv4.conf.default.send_redirects=0 \
     --sysctl net.ipv4.conf.default.rp_filter=0 \
-    --sysctl net.ipv4.conf.eth0.send_redirects=0 \
-    --sysctl net.ipv4.conf.eth0.rp_filter=0 \
     hwdsl2/ipsec-vpn-server
 ```
 
-When running without privileged mode, the container is unable to change `sysctl` settings. This could affect certain features of this image. A known issue is that the [Android MTU/MSS fix](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients.md#android-mtumss-issues) also requires adding `--sysctl net.ipv4.ip_no_pmtu_disc=1` to the `docker run` command. If you encounter any issues, try re-creating the container using [privileged mode](../README.md#start-the-ipsec-vpn-server).
+When running without privileged mode, the container is unable to change `sysctl` settings. This could affect certain features of this image. A known issue is that the [Android/Linux MTU/MSS fix](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients.md#androidlinux-mtumss-issues) also requires adding `--sysctl net.ipv4.ip_no_pmtu_disc=1` to the `docker run` command. If you encounter any issues, try re-creating the container using [privileged mode](../README.md#start-the-ipsec-vpn-server).
 
 After creating the Docker container, see [Retrieve VPN login details](../README.md#retrieve-vpn-login-details).
 
@@ -75,8 +88,6 @@ Similarly, if using [Docker compose](https://docs.docker.com/compose/), you may 
     - net.ipv4.conf.default.accept_redirects=0
     - net.ipv4.conf.default.send_redirects=0
     - net.ipv4.conf.default.rp_filter=0
-    - net.ipv4.conf.eth0.send_redirects=0
-    - net.ipv4.conf.eth0.rp_filter=0
 ```
 
 For more information, see [compose file reference](https://docs.docker.com/compose/compose-file/).
@@ -123,7 +134,11 @@ When connecting using IPsec/L2TP mode, the VPN server (Docker container) has int
 
 When connecting using IPsec/XAuth ("Cisco IPsec") or IKEv2 mode, the VPN server (Docker container) does NOT have an internal IP within the VPN subnet `192.168.43.0/24`. Clients are assigned internal IPs from `192.168.43.10` to `192.168.43.250`.
 
-Advanced users may optionally assign static IPs to VPN clients. IKEv2 mode does NOT support this feature. To assign static IPs, declare the `VPN_ADDL_IP_ADDRS` variable in your `env` file, then re-create the Docker container. Example:
+Advanced users may optionally assign static IPs to VPN clients. For **IKEv2 mode**, first open a [Bash shell inside the container](#bash-shell-inside-container), then follow the steps in section "IKEv2 mode: Assign static IPs to VPN clients" of [Internal VPN IPs and traffic](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/advanced-usage.md#internal-vpn-ips-and-traffic). Note that you should skip steps 2, 3 and 5, and restart the Docker container when finished. This is because changes to `/etc/ipsec.conf` may be overwritten on container restart.
+
+Instructions below **ONLY** apply to IPsec/L2TP and IPsec/XAuth ("Cisco IPsec") modes.
+
+To assign static IPs, declare the `VPN_ADDL_IP_ADDRS` variable in your `env` file, then re-create the Docker container. Example:
 
 ```
 VPN_ADDL_USERS=user1 user2 user3 user4 user5
@@ -175,9 +190,27 @@ In the examples above, `VPN_L2TP_LOCAL` is the VPN server's internal IP for IPse
 
 Note that if you specify `VPN_XAUTH_POOL` in the `env` file, and IKEv2 is already set up in the Docker container, you **must** manually edit `/etc/ipsec.d/ikev2.conf` inside the container and replace `rightaddresspool=192.168.43.10-192.168.43.250` with the **same value** as `VPN_XAUTH_POOL`, before re-creating the Docker container. Otherwise, IKEv2 may stop working.
 
+## Split tunneling
+
+With split tunneling, VPN clients will only send traffic for a specific destination subnet through the VPN tunnel. Other traffic will NOT go through the VPN tunnel. This allows you to gain secure access to a network through your VPN, without routing all your client's traffic through the VPN. Split tunneling has some limitations, and is not supported by all VPN clients.
+
+Advanced users can optionally enable split tunneling for IKEv2 mode. Add the variable `VPN_SPLIT_IKEV2` to your `env` file, then re-create the Docker container. For example, if the destination subnet is `10.123.123.0/24`:
+
+```
+VPN_SPLIT_IKEV2=10.123.123.0/24
+```
+
+Note that this variable has no effect if IKEv2 is already set up in the Docker container. In this case, you have two options:
+
+**Option 1:** First start a [Bash shell inside the container](#bash-shell-inside-container), then edit `/etc/ipsec.d/ikev2.conf` and replace `leftsubnet=0.0.0.0/0` with your desired subnet. When finished, `exit` the container and run `docker restart ipsec-vpn-server`.
+
+**Option 2:** Remove both the Docker container and the `ikev2-vpn-data` volume, then re-create the Docker container. All VPN configuration will be **permanently deleted**. Refer to "remove IKEv2" in [Configure and use IKEv2 VPN](../README.md#configure-and-use-ikev2-vpn).
+
+Alternatively, Windows users can enable split tunneling by manually adding routes. For more details, see [Split tunneling](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/advanced-usage.md#split-tunneling).
+
 ## About host network mode
 
-Advanced users can run this image in [host network mode](https://docs.docker.com/network/host/), by adding `--network=host` to the `docker run` command. In addition, if [running without privileged mode](#run-without-privileged-mode), you may also need to replace `eth0` with the network interface name of your Docker host.
+Advanced users can run this image in [host network mode](https://docs.docker.com/network/host/), by adding `--network=host` to the `docker run` command.
 
 Host network mode is NOT recommended for this image, unless your use case requires it. In this mode, the container's network stack is not isolated from the Docker host, and VPN clients may be able to access ports or services on the Docker host using its internal VPN IP `192.168.42.1` after connecting using IPsec/L2TP mode. Note that you will need to manually clean up the changes to IPTables rules and sysctl settings by [run.sh](../run.sh) or reboot the server when you no longer use this image.
 
@@ -198,13 +231,13 @@ Then run the following commands:
 apk add --no-cache rsyslog
 rsyslogd
 rc-service ipsec stop; rc-service -D ipsec start >/dev/null 2>&1
-sed -i '/pluto\.pid/a rsyslogd' /opt/src/run.sh
+sed -i '\|pluto\.pid|a rm -f /var/run/rsyslogd.pid; rsyslogd' /opt/src/run.sh
 exit
 # For Debian-based image
 apt-get update && apt-get -y install rsyslog
-service rsyslog restart
+rsyslogd
 service ipsec restart
-sed -i '/pluto\.pid/a service rsyslog restart' /opt/src/run.sh
+sed -i '\|pluto\.pid|a rm -f /var/run/rsyslogd.pid; rsyslogd' /opt/src/run.sh
 exit
 ```
 
@@ -312,7 +345,7 @@ docker restart ipsec-vpn-server
 
 **Note:** The software components inside the pre-built image (such as Libreswan and xl2tpd) are under the respective licenses chosen by their respective copyright holders. As for any pre-built image usage, it is the image user's responsibility to ensure that any use of this image complies with any relevant licenses for all software contained within.
 
-Copyright (C) 2016-2023 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)
+Copyright (C) 2016-2024 [Lin Song](https://github.com/hwdsl2) [![View my profile on LinkedIn](https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x25.png)](https://www.linkedin.com/in/linsongui)
 
 [![Creative Commons License](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)](http://creativecommons.org/licenses/by-sa/3.0/)   
 This work is licensed under the [Creative Commons Attribution-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-sa/3.0/)   
